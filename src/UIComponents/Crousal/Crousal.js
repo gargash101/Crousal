@@ -1,28 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./Crousal.scss";
+
+const CROUSAL_DIRECTION = { Forward: "Forward", Reverse: "Reverse" };
 
 const Crousal = (props) => {
   const crousalChild = useMemo(() => {
     let clonedSlides = [...props.children];
-    let firstChild = clonedSlides[0];
-    let lastChild = clonedSlides[clonedSlides.length - 1];
+    let lastElements = clonedSlides.slice(-props.show);
+    let firstElements = clonedSlides.slice(0, props.show);
 
-    return [lastChild, ...clonedSlides, firstChild];
-  }, [props.children]);
+    return [...lastElements, ...clonedSlides, ...firstElements];
+  }, [props.children, props.show]);
 
-  const crousalItemCount = crousalChild && crousalChild.length;
   const crousalRef = useRef();
 
-  const [activeSlide, setActiveSlide] = useState(1);
+  const [activeSlide, setActiveSlide] = useState(props.show);
   const [transitionEnabled, setTransitionEnabled] = useState(true);
 
   const changeSlide = (newIndex) => {
     if (newIndex < 0) {
-      newIndex = crousalItemCount - 1;
-    } else if (newIndex >= crousalItemCount) {
+      newIndex = crousalChild.length - 1;
+    } else if (newIndex >= crousalChild.length) {
       newIndex = 0;
     }
-
     setActiveSlide(newIndex);
   };
 
@@ -46,21 +46,34 @@ const Crousal = (props) => {
   }, []);
 
   useEffect(() => {
-    // const interval = setInterval(() => {
-    //   changeSlide(activeSlide + 1);
-    // }, (+props.delay || 1) * 1000);
-    // return () => {
-    //   clearInterval(interval);
-    // };
-  }, [props.delay, activeSlide]);
+    if (
+      activeSlide >= props.show &&
+      activeSlide <= crousalChild.length - 2 * props.show
+    ) {
+      setTransitionEnabled(true);
+    }
+  }, [activeSlide, crousalChild.length, props.show]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (props.direction === CROUSAL_DIRECTION.Forward) {
+        changeSlide(activeSlide + 1);
+      } else {
+        changeSlide(activeSlide - 1);
+      }
+    }, (+props.delay || 1) * 1000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [props.delay, activeSlide, props.direction]);
 
   const handleTransitionEnd = () => {
     if (activeSlide === 0) {
       setTransitionEnabled(false);
-      setActiveSlide(props.children.length - 1);
-    } else if (activeSlide > props.children.length - 1) {
+      setActiveSlide(crousalChild.length - 2 * props.show);
+    } else if (activeSlide >= crousalChild.length - props.show) {
       setTransitionEnabled(false);
-      setActiveSlide(1);
+      setActiveSlide(props.show);
     }
   };
 
@@ -81,14 +94,19 @@ const Crousal = (props) => {
         ></div>
       </div>
       <div
-        className="crousalItemWrapper"
+        className={
+          "crousalItemWrapper" + (transitionEnabled ? "" : " noTransition")
+        }
         style={{
-          transform: `translateX(-${activeSlide * 100}%)`,
-          ...(!transitionEnabled && { tranisition: "none !imporant" })
+          transform: `translateX(-${activeSlide * (100 / props.show)}%)`
         }}
         onTransitionEnd={() => handleTransitionEnd()}
       >
-        {crousalChild}
+        {crousalChild.map((crouseChild) => {
+          return React.cloneElement(crouseChild, {
+            width: `calc(100%/${props.show})`
+          });
+        })}
       </div>
     </div>
   );

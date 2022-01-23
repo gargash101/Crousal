@@ -1,0 +1,26 @@
+.bannerController{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+
+
+  #bannerTransitionDuration{
+    margin-left: 4px;
+    margin-bottom: 4px
+
+  }
+
+  .dirWrapper{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  margin-bottom: 10px;
+
+  .sbmtBtn{
+    cursor: pointer;
+    margin-top: 10px;
+  }
+}
